@@ -56,11 +56,14 @@
       background: transparent;
       border: none;
     }
+
+
+
   </style>
 </head>
 <body>
   <div id="menu">
-      <h1>Desvie dos clones da Bela e ganhe uma surpresa 💌</h1>
+      <img src="patas.png">
     <button onclick="startGame()">Iniciar Jogo</button>
   </div>
 
@@ -272,7 +275,7 @@
         menu.appendChild(container);
       } else {
         menu.innerHTML = `
-          <h1>🐾 A Bella te pegou!</h1>
+          <h1>A Bella te pegou!</h1>
           <p style="font-size: 10px;">Mas você pode tentar de novo!</p>
           <button onclick="location.reload()">Reiniciar</button>
         `;

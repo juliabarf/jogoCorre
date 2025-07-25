@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Jogo do Corredor</title>
+  <title>joguinho</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     html, body {
@@ -288,13 +288,23 @@
     }
 
     function initControls() {
+      // Teclado
       window.addEventListener("keydown", function(e) {
         if ((e.code === "Space" || e.code === "ArrowUp") && !player.jumping) {
           player.vy = -16;
           player.jumping = true;
         }
       });
+
+      // Toque para celular
+      window.addEventListener("touchstart", function() {
+        if (!player.jumping) {
+          player.vy = -16;
+          player.jumping = true;
+        }
+      });
     }
+
 
     function gameLoop(timestamp) {
       const delta = (timestamp - lastTimestamp) / 16.67;

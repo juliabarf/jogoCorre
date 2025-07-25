@@ -13,19 +13,68 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      font-family: 'Press Start 2P', cursive;
     }
+
+    #menu {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      text-align: center;
+    }
+
+    #menu h1 {
+      font-size: 16px;
+      color: #333;
+    }
+
+    button {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 14px;
+      padding: 10px 20px;
+      background-color: #f5deb3;
+      border: 2px solid #333;
+      cursor: pointer;
+      box-shadow: 2px 2px #999;
+    }
+
+    button:hover {
+      background-color: #ffe4b5;
+    }
+
     canvas {
       background: #00BFFF;
-      display: block;
+      display: none;
       border: 2px solid #333;
+    }
+
+    #spriteCanvas {
+      width: 95px;
+      height: 203px;
+      background: transparent;
+      border: none;
     }
   </style>
 </head>
 <body>
+  <div id="menu">
+    <h1>JOGO DO CORREDOR</h1>
+    <button onclick="startGame()">Iniciar Jogo</button>
+  </div>
+
   <canvas id="gameCanvas" width="800" height="400"></canvas>
+  <canvas id="spriteCanvas" width="95" height="203"></canvas>
+
   <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
+
+    const menu = document.getElementById("menu");
+    const spriteCanvas = document.getElementById("spriteCanvas");
+    const spriteCtx = spriteCanvas.getContext("2d");
+    spriteCtx.imageSmoothingEnabled = false;
 
     let gravity = 0.8;
     let gameSpeed = 5;
@@ -56,8 +105,7 @@
     function checkAllAssetsLoaded() {
       assetsLoaded++;
       if (assetsLoaded >= totalAssets) {
-        initGame();
-        window.requestAnimationFrame(gameLoop);
+        initControls();
       }
     }
 
@@ -110,7 +158,7 @@
 
         if (this.x + this.width < 0) {
           this.x = canvas.width + Math.random() * 300;
-          score += 5;
+          score += 100;
           gameSpeed += 0.2;
           if (score >= 300) gameOver = true;
         }
@@ -149,30 +197,111 @@
       player.vy = 0;
       player.jumping = false;
       gameOver = false;
+      lastTimestamp = 0;
     }
 
-    function initGame() {
+    function animateSprite() {
+      const frames = [new Image(), new Image(), new Image()];
+      frames[0].src = "julia1.png";
+      frames[1].src = "julia2.png";
+      frames[2].src = "julia3.png";
+
+      let currentFrame = 0;
+      let loaded = 0;
+
+      frames.forEach(img => {
+        img.onload = () => {
+          loaded++;
+          if (loaded === frames.length) startAnimation();
+        };
+      });
+
+      function startAnimation() {
+        spriteCanvas.style.display = "block";
+        setInterval(() => {
+          spriteCtx.clearRect(0, 0, spriteCanvas.width, spriteCanvas.height);
+          spriteCtx.drawImage(frames[currentFrame], 0, 0, 95, 203);
+          currentFrame = (currentFrame + 1) % frames.length;
+        }, 300);
+      }
+    }
+
+    function showGameOverMenu() {
+      canvas.style.display = "none";
+      menu.innerHTML = "";
+      const ganhou = score >= 300;
+
+      if (ganhou) {
+        animateSprite();
+        menu.style.display = "flex";
+        const container = document.createElement("div");
+        container.style.cssText = `
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          background: #fff0f5;
+          padding: 30px;
+          border: 4px dashed #ff69b4;
+          border-radius: 20px;
+          box-shadow: 4px 4px #e0c4cc;
+          max-width: 600px;
+          font-size: 10px;
+        `;
+
+        const canvasContainer = document.createElement("div");
+        canvasContainer.appendChild(spriteCanvas);
+
+        const text = document.createElement("div");
+        text.innerHTML = `
+          <h1 style="color: #ff69b4;">Vale de Beijinhos</h1>
+          <p style="text-align: center; color: #000">Uhuuuu!! você passou pela Bela e ganhou um vale de beijinhos da Juju😘</p>
+          <button onclick="location.reload()" style="
+            margin-top: 20px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            background-color: #f5deb3;
+            border: 2px solid #333;
+            padding: 10px 15px;
+            cursor: pointer;
+          ">Jogar Novamente</button>
+        `;
+
+        container.appendChild(canvasContainer);
+        container.appendChild(text);
+        menu.appendChild(container);
+      } else {
+        menu.innerHTML = `
+          <h1>🐾 A Bella te pegou!</h1>
+          <p style="font-size: 10px;">Mas você pode tentar de novo!</p>
+          <button onclick="location.reload()">Reiniciar</button>
+        `;
+        menu.style.display = "flex";
+      }
+    }
+
+    function startGame() {
+      menu.style.display = "none";
+      canvas.style.display = "block";
+      spriteCanvas.style.display = "none";
+      resetGame();
+      window.requestAnimationFrame(gameLoop);
+    }
+
+    function initControls() {
       window.addEventListener("keydown", function(e) {
         if ((e.code === "Space" || e.code === "ArrowUp") && !player.jumping) {
-          player.vy = -16; // ainda proporcional, será ajustado pelo delta no update
+          player.vy = -16;
           player.jumping = true;
         }
       });
     }
 
     function gameLoop(timestamp) {
-      const delta = (timestamp - lastTimestamp) / 16.67; // Normaliza para ~60fps
+      const delta = (timestamp - lastTimestamp) / 16.67;
       lastTimestamp = timestamp;
 
       if (gameOver) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.font = "30px 'Press Start 2P'";
-        ctx.fillStyle = "red";
-        ctx.fillText("Fim de Jogo! Pontuação: " + score, canvas.width / 2 - 250, canvas.height / 2);
-        setTimeout(() => {
-          resetGame();
-          window.requestAnimationFrame(gameLoop);
-        }, 2000);
+        showGameOverMenu();
         return;
       }
 
